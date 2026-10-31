@@ -1,3 +1,6 @@
+/* =====================================================
+   InvestTrack — app.js
+   ===================================================== */
 
 /* ---------- Utilitários ---------- */
 const $ = id => document.getElementById(id);
@@ -16,6 +19,7 @@ const statusBadge = x => `<span class="status${x.status==='Vencido'?' expired':'
 
 /* ---------- Estado e armazenamento ---------- */
 const SETTINGS_KEY = 'investtrack_settings';
+const SCH_KEY = 'investtrack_scholarships';
 const load = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch(e) { return fallback; } };
 
 let investments = load('investtrack_investments', [
@@ -28,6 +32,7 @@ let transactions = load('investtrack_transactions', [
   {description:'Juros creditados',type:'Juros',date:'2026-10-15',investment:'Depósito Crescer 12M',amount:15000},
   {description:'Aplicação inicial',type:'Depósito',date:'2026-10-02',investment:'Fundo Futuro',amount:100000}
 ]);
+let schInvestments = load(SCH_KEY, []);
 let settings = {name:'João Manuel', email:'abilio@example.com', currency:'', dateFormat:'', alerts:true, monthly:true, ...load(SETTINGS_KEY, {})};
 let growthChart, distributionChart, scenarioChart, simChart;
 
@@ -37,6 +42,7 @@ const persist = () => {
     localStorage.setItem('investtrack_transactions', JSON.stringify(transactions));
   } catch(e) {}
 };
+const persistSch = () => { try { localStorage.setItem(SCH_KEY, JSON.stringify(schInvestments)); } catch(e) {} };
 
 /* ---------- Cálculos ---------- */
 // Juros simples até ao vencimento (previsão)
@@ -64,12 +70,13 @@ function render(){
   renderDeposits();
   renderTransactions();
   renderReports();
+  renderScholarships();
   renderNotifications();
 }
 
 /* ---------- Navegação ---------- */
 const closeMenu = () => $('sidebar').classList.remove('open');
-const pageLabels = {dashboard:'Dashboard',investments:'Investimentos',deposits:'Depósitos a prazo',transactions:'Transacções',analytics:'Análises',simulator:'Simulador',reports:'Relatórios',settings:'Definições'};
+const pageLabels = {dashboard:'Dashboard',investments:'Investimentos',deposits:'Depósitos a prazo',transactions:'Transacções',analytics:'Análises',simulator:'Simulador',reports:'Relatórios',scholarships:'Bolsas',settings:'Definições'};
 function showPage(name){
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   $('page-' + name)?.classList.add('active');
@@ -311,7 +318,7 @@ invForm.addEventListener('submit', e => {
   toast('Investimento registado com sucesso.');
 });
 
-
+/* ---------- Formulário de transacção ---------- */
 $('transactionForm').addEventListener('submit', e => {
   e.preventDefault();
   const obj = Object.fromEntries(new FormData(e.target));
@@ -323,6 +330,7 @@ $('transactionForm').addEventListener('submit', e => {
   toast('Transacção registada.');
 });
 
+/* ---------- Simulador ---------- */
 function compound(principal, monthly, rate, years, frequency){
   const months = Math.round(years * 12), periodRate = Math.pow(1 + rate / 100 / frequency, frequency / 12) - 1;
   let balance = principal;
@@ -352,7 +360,7 @@ function runSimulation(){
 $('runSimulation').addEventListener('click', runSimulation);
 ['simInitial','simMonthly','simRate','simYears','simFrequency'].forEach(id => $(id).addEventListener('change', runSimulation));
 
-
+/* ---------- Análises (cenários) ---------- */
 let activePeriod = 'short';
 document.querySelectorAll('[data-period]').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('[data-period]').forEach(x => x.classList.remove('selected'));
@@ -383,6 +391,111 @@ function renderScenario(){
   }
 }
 
+/* ---------- Bolsas ---------- */
+// EDITE AQUI com a informação oficial de cada programa.
+const bolsas = [
+  {id:'inagbe', icon:'🎓', name:'INAGBE', entity:'Instituto Nacional de Gestão de Bolsas de Estudo', tag:'Nacional', suggested:100000, verify:false,
+   summary:'Entidade do Estado angolano responsável pela gestão de bolsas de estudo, internas e externas.',
+   reasons:['Apoiar o acesso de estudantes ao ensino superior','Contribuir para a formação de quadros nacionais','Investimento social de longo prazo']},
+  {id:'mirempet', icon:'⛏️', name:'MIREMPET Angola-França', entity:'Ministério dos Recursos Minerais, Petróleo e Gás', tag:'Cooperação internacional', suggested:150000, verify:true,
+   summary:'Programa ligado ao sector de recursos minerais, petróleo e gás, em cooperação Angola-França.',
+   reasons:['Formar técnicos para o sector energético e mineiro','Promover o intercâmbio académico com França','Reforçar competências nacionais em áreas estratégicas']},
+  {id:'isptec', icon:'💻', name:'Bolsa Interna ISPTEC', entity:'Instituto Superior Politécnico de Tecnologias e Ciências', tag:'Instituição de ensino', suggested:75000, verify:true,
+   summary:'Bolsa interna da instituição, orientada para formação em tecnologia, engenharia e ciências.',
+   reasons:['Apoiar estudantes com mérito e poucos recursos','Impulsionar a formação em tecnologia e engenharia','Fortalecer a ligação entre ensino e mercado de trabalho']},
+  {id:'pda', icon:'📘', name:'Bolsa de PDA', entity:'Entidade a confirmar', tag:'Confirmar dados', suggested:50000, verify:true,
+   summary:'Programa de bolsa PDA. Complete esta descrição com a informação oficial do programa.',
+   reasons:['Apoiar a formação académica de novos talentos','Contribuir para o desenvolvimento do país','Diversificar o meu investimento social']},
+  {id:'lamasia', icon:'🌏', name:'Bolsa Angola-LAMASIA', entity:'Entidade a confirmar', tag:'Confirmar dados', suggested:100000, verify:true,
+   summary:'Programa de cooperação Angola-LAMASIA. Complete esta descrição com a informação oficial do programa.',
+   reasons:['Promover o intercâmbio internacional de estudantes','Abrir oportunidades de estudo no estrangeiro','Criar ligações académicas e culturais']}
+];
+let currentBolsa = null;
+const bolsaById = id => bolsas.find(b => b.id === id);
+const schTotalFor = id => sum(schInvestments.filter(x => x.bolsaId === id), x => x.amount);
+
+function renderScholarships(){
+  $('scholarshipGrid').innerHTML = bolsas.map(b => `
+    <article class="sch-card">
+      <div class="sch-head"><span class="sch-icon">${b.icon}</span><div><h3>${escapeHtml(b.name)}</h3><small>${escapeHtml(b.entity)}</small></div></div>
+      <div class="sch-tags"><span class="sch-tag">${escapeHtml(b.tag)}</span>${b.verify ? '<span class="sch-tag warn">Confirmar dados</span>' : ''}</div>
+      <p>${escapeHtml(b.summary)}</p>
+      <div class="sch-invested"><span>O meu investimento</span><b>${money(schTotalFor(b.id))}</b></div>
+      <button class="btn btn-primary" data-bolsa="${b.id}">Investir nesta bolsa</button>
+    </article>`).join('');
+
+  $('scholarshipRows').innerHTML = schInvestments.map(x => {
+    const b = bolsaById(x.bolsaId);
+    return `<tr><td data-label="Bolsa"><strong>${escapeHtml(b ? b.name : x.bolsaId)}</strong></td><td data-label="Motivo">${escapeHtml(x.reason)}</td><td data-label="Data">${dateFmt(x.date)}</td><td data-label="Valor" class="positive">${money(x.amount)}</td><td class="cell-action"><button class="more-btn" data-del-sch="${x.id}" title="Eliminar" aria-label="Eliminar investimento">×</button></td></tr>`;
+  }).join('') || '<tr><td colspan="5">Ainda não investiu em nenhuma bolsa.</td></tr>';
+
+  $('schTotal').textContent = money(sum(schInvestments, x => x.amount));
+  $('schCount').textContent = new Set(schInvestments.map(x => x.bolsaId)).size;
+  $('schOps').textContent = schInvestments.length;
+}
+
+function updateSchEstimate(){
+  const v = Number($('schAmount').value) || 0;
+  $('schEstimate').textContent = v >= 1000
+    ? `Vai investir ${money(v)} em ${currentBolsa.name}. É um apoio social, sem juros nem retorno financeiro garantido.`
+    : 'Indique um valor igual ou superior a Kz 1.000.';
+}
+function setSchAmount(v){
+  $('schAmount').value = v;
+  $('schRange').value = Math.min(Math.max(v, 10000), 5000000);
+  updateSchEstimate();
+}
+
+function openScholarship(id){
+  currentBolsa = bolsaById(id);
+  if (!currentBolsa) return;
+  $('schEntity').textContent = currentBolsa.entity.toUpperCase();
+  $('schTitle').textContent = 'Investir em ' + currentBolsa.name;
+  $('schSummary').textContent = currentBolsa.summary;
+  $('schReasons').innerHTML = [...currentBolsa.reasons, 'Outro motivo (descrevo na nota)'].map(r =>
+    `<label class="reason-option"><input type="radio" name="reason" value="${escapeHtml(r)}" required><span>${escapeHtml(r)}</span></label>`).join('');
+  $('scholarshipForm').reset();
+  setSchAmount(currentBolsa.suggested);
+  openModal('scholarshipModal');
+}
+
+$('scholarshipGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-bolsa]');
+  if (b) openScholarship(b.dataset.bolsa);
+});
+$('schAmount').addEventListener('input', () => setSchAmount(Number($('schAmount').value) || 0));
+$('schRange').addEventListener('input', () => setSchAmount(Number($('schRange').value)));
+$('schChips').addEventListener('click', e => {
+  const c = e.target.closest('[data-amount]');
+  if (c) setSchAmount(Number(c.dataset.amount));
+});
+
+$('scholarshipForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const f = Object.fromEntries(new FormData(e.target));
+  const amount = Number(f.amount);
+  if (!(amount >= 1000)) { toast('Indique um valor igual ou superior a Kz 1.000.'); return; }
+  schInvestments.unshift({id:Date.now(), bolsaId:currentBolsa.id, amount, reason:f.reason, note:f.note || '', date:isoToday});
+  transactions.unshift({description:'Investimento em bolsa', type:'Depósito', date:isoToday, investment:currentBolsa.name, amount});
+  persistSch();
+  persist();
+  renderScholarships();
+  renderTransactions();
+  $('scholarshipModal').classList.remove('open');
+  toast('Investimento em ' + currentBolsa.name + ' registado.');
+});
+
+$('scholarshipRows').addEventListener('click', e => {
+  const b = e.target.closest('[data-del-sch]');
+  if (b && confirm('Pretende eliminar este investimento em bolsa?')) {
+    schInvestments = schInvestments.filter(x => x.id !== Number(b.dataset.delSch));
+    persistSch();
+    renderScholarships();
+    toast('Investimento eliminado.');
+  }
+});
+
+/* ---------- Arranque ---------- */
 fillSettingsForm();
 applySettings();
 render();
