@@ -5,16 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#102a43">
   <title>Investor — Gestão de Investimentos</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
+      <button class="sidebar-close" id="sidebarClose" aria-label="Fechar menu">×</button>
       <a class="brand" href="#" aria-label="InvestTrack início"><span class="brand-mark">I</span><span>Invest<span class="brand-light">Track</span></span></a>
       <div class="workspace-label">MENU PRINCIPAL</div>
       <nav class="nav-list" id="mainNav">
@@ -25,6 +27,7 @@
         <button class="nav-link" data-page="analytics"><span>⌁</span> Análises</button>
         <button class="nav-link" data-page="simulator"><span>◷</span> Simulador</button>
         <button class="nav-link" data-page="reports"><span>▤</span> Relatórios</button>
+        <button class="nav-link" data-page="scholarships"><span>🎓</span> Bolsas</button>
       </nav>
       <div class="workspace-label lower-label">PREFERÊNCIAS</div>
       <nav class="nav-list">
@@ -32,32 +35,33 @@
       </nav>
       <div class="sidebar-bottom">
         <div class="help-card"><div class="help-icon">?</div><strong>Precisa de ajuda?</strong><p>Consulte o centro de apoio InvestTrack.</p><a href="mailto:apoio@investtrack.ao">Contactar apoio ↗</a></div>
-        <div class="user-mini"><div class="avatar">JM</div><div><strong>Joao Manuel</strong><small>Conta pessoal</small></div><span class="dots">•••</span></div>
+        <div class="user-mini" data-goto="settings" role="button" tabindex="0"><div class="avatar" id="userAvatar">JM</div><div><strong id="userName">João Manuel</strong><small>Conta pessoal</small></div><span class="dots">•••</span></div>
       </div>
     </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <main class="main-area">
       <header class="topbar">
         <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Abrir menu">☰</button>
         <div class="breadcrumb">Página inicial <span>/</span> <strong id="pageCrumb">Dashboard</strong></div>
-        <div class="top-actions"><span class="live-status"><i></i> Dados de demonstração</span><button class="icon-btn notification" aria-label="Notificações">♧<b></b></button><div class="top-avatar">AA</div></div>
+        <div class="top-actions"><span class="live-status"><i></i> Dados de demonstração</span><button class="icon-btn notification" aria-label="Notificações" data-open-modal="notificationsModal">♧<b></b></button><div class="top-avatar" id="topAvatar" data-goto="settings" role="button" tabindex="0" title="Definições">JM</div></div>
       </header>
 
       <section class="page active" id="page-dashboard">
-        <div class="page-heading"><div><p class="eyebrow">SEXTA-FEIRA, 30 DE OUTUBRO DE 2026</p><h1>Bom dia, João <span>✦</span></h1><p class="muted">Aqui está o resumo da sua vida financeira.</p></div><button class="btn btn-primary" data-open-modal="investmentModal">＋ Novo investimento</button></div>
+        <div class="page-heading"><div><p class="eyebrow" id="todayLabel">HOJE</p><h1><span class="plain" id="greeting">Bom dia, João</span> <span>✦</span></h1><p class="muted">Aqui está o resumo da sua vida financeira.</p></div><button class="btn btn-primary" data-open-modal="investmentModal">＋ Novo investimento</button></div>
         <div class="kpi-grid">
-          <article class="kpi-card"><div class="kpi-top"><span>Património investido</span><span class="kpi-icon navy">◈</span></div><strong id="totalWealth">Kz 2.845.000</strong><small class="positive">↗ 8,4% <span>vs. mês anterior</span></small></article>
+          <article class="kpi-card"><div class="kpi-top"><span>Património investido</span><span class="kpi-icon navy">◈</span></div><strong id="totalWealth">Kz 2.845.000</strong><small class="positive" id="wealthDelta">↗ 0% <span>sobre o capital</span></small></article>
           <article class="kpi-card"><div class="kpi-top"><span>Capital investido</span><span class="kpi-icon blue">↗</span></div><strong id="totalCapital">Kz 2.650.000</strong><small class="muted">Capital aplicado</small></article>
-          <article class="kpi-card"><div class="kpi-top"><span>Juros acumulados</span><span class="kpi-icon green">％</span></div><strong id="totalInterest">Kz 195.000</strong><small class="positive">+ Kz 24.500 este mês</small></article>
-          <article class="kpi-card"><div class="kpi-top"><span>Rentabilidade média</span><span class="kpi-icon gold">⌁</span></div><strong>11,8% <em>/ ano</em></strong><small class="positive">↗ 1,2 p.p. <span>este ano</span></small></article>
+          <article class="kpi-card"><div class="kpi-top"><span>Juros acumulados</span><span class="kpi-icon green">％</span></div><strong id="totalInterest">Kz 195.000</strong><small class="positive" id="monthInterest">+ Kz 0 por mês</small></article>
+          <article class="kpi-card"><div class="kpi-top"><span>Rentabilidade média</span><span class="kpi-icon gold">⌁</span></div><strong><span id="avgRate">11,8%</span> <em>/ ano</em></strong><small class="muted">Média ponderada pelo capital</small></article>
         </div>
         <div class="content-grid main-charts">
           <article class="panel growth-panel"><div class="panel-heading"><div><h2>Evolução do património</h2><p class="muted">Crescimento do seu portefólio ao longo do tempo</p></div><select id="growthRange" class="select-small"><option value="6">Últimos 6 meses</option><option value="12" selected>Últimos 12 meses</option><option value="all">Todo o período</option></select></div><div class="chart-wrap"><canvas id="growthChart"></canvas></div></article>
-          <article class="panel distribution-panel"><div class="panel-heading"><div><h2>Distribuição</h2><p class="muted">Por tipo de investimento</p></div><button class="more-btn" aria-label="Mais opções">•••</button></div><div class="donut-wrap"><canvas id="distributionChart"></canvas><div class="donut-center"><strong>2,65M</strong><small>Capital (Kz)</small></div></div><div class="legend"><div><i class="dot dot-navy"></i><span>Depósitos a prazo</span><strong>56%</strong></div><div><i class="dot dot-green"></i><span>Depósitos bancários</span><strong>29%</strong></div><div><i class="dot dot-gold"></i><span>Outros</span><strong>15%</strong></div></div></article>
+          <article class="panel distribution-panel"><div class="panel-heading"><div><h2>Distribuição</h2><p class="muted">Por tipo de investimento</p></div><button class="more-btn" aria-label="Ver análises" data-goto="analytics">•••</button></div><div class="donut-wrap"><canvas id="distributionChart"></canvas><div class="donut-center"><strong id="donutCenter">2,65M</strong><small>Capital (Kz)</small></div></div><div class="legend"><div><i class="dot dot-navy"></i><span>Depósitos a prazo</span><strong id="legPrazo">56%</strong></div><div><i class="dot dot-green"></i><span>Depósitos bancários</span><strong id="legBanco">29%</strong></div><div><i class="dot dot-gold"></i><span>Outros</span><strong id="legOutro">15%</strong></div></div></article>
         </div>
         <div class="content-grid lower-grid">
           <article class="panel"><div class="panel-heading"><div><h2>Investimentos recentes</h2><p class="muted">Acompanhe os seus activos</p></div><button class="text-btn" data-goto="investments">Ver todos →</button></div><div class="table-scroll"><table><thead><tr><th>INVESTIMENTO</th><th>INSTITUIÇÃO</th><th>CAPITAL</th><th>TAXA</th><th>ESTADO</th></tr></thead><tbody id="recentInvestments"></tbody></table></div></article>
-          <article class="panel maturity-panel"><div class="panel-heading"><div><h2>Próximos vencimentos</h2><p class="muted">Não perca as datas importantes</p></div><button class="more-btn">•••</button></div><div id="upcomingList" class="upcoming-list"></div><button class="btn btn-outline full-btn" data-goto="deposits">Ver calendário completo</button></article>
+          <article class="panel maturity-panel"><div class="panel-heading"><div><h2>Próximos vencimentos</h2><p class="muted">Não perca as datas importantes</p></div><button class="more-btn" aria-label="Ver depósitos" data-goto="deposits">•••</button></div><div id="upcomingList" class="upcoming-list"></div><button class="btn btn-outline full-btn" data-goto="deposits">Ver calendário completo</button></article>
         </div>
         <div class="insight-strip"><div class="insight-symbol">✦</div><div><strong>Uma visão mais clara do seu futuro financeiro</strong><p>Os valores apresentados são estimativas de demonstração e não representam rendimentos garantidos.</p></div><button class="text-btn" data-goto="analytics">Explorar análises →</button></div>
       </section>
@@ -70,7 +74,7 @@
 
       <section class="page" id="page-deposits">
         <div class="page-heading"><div><p class="eyebrow">GESTÃO DE PRAZOS</p><h1>Depósitos a prazo</h1><p class="muted">Controle os prazos, juros e vencimentos dos seus depósitos.</p></div><button class="btn btn-primary" data-open-modal="investmentModal">＋ Registar depósito</button></div>
-        <div class="kpi-grid three"><article class="kpi-card"><div class="kpi-top"><span>Capital aplicado</span><span class="kpi-icon navy">◈</span></div><strong>Kz 1.500.000</strong><small class="muted">Em depósitos activos</small></article><article class="kpi-card"><div class="kpi-top"><span>Juros previstos</span><span class="kpi-icon green">％</span></div><strong>Kz 180.000</strong><small class="positive">Estimativa bruta</small></article><article class="kpi-card"><div class="kpi-top"><span>Próximo vencimento</span><span class="kpi-icon gold">◷</span></div><strong>15 Nov 2026</strong><small class="muted">Faltam 16 dias</small></article></div>
+        <div class="kpi-grid three"><article class="kpi-card"><div class="kpi-top"><span>Capital aplicado</span><span class="kpi-icon navy">◈</span></div><strong id="depCapital">Kz 1.500.000</strong><small class="muted">Em depósitos activos</small></article><article class="kpi-card"><div class="kpi-top"><span>Juros previstos</span><span class="kpi-icon green">％</span></div><strong id="depInterest">Kz 180.000</strong><small class="positive">Estimativa bruta</small></article><article class="kpi-card"><div class="kpi-top"><span>Próximo vencimento</span><span class="kpi-icon gold">◷</span></div><strong id="depNext">15 Nov 2026</strong><small class="muted" id="depNextInfo">Faltam 16 dias</small></article></div>
         <article class="panel"><div class="panel-heading"><div><h2>Os seus depósitos</h2><p class="muted">Resumo dos depósitos a prazo registados</p></div></div><div id="depositCards" class="deposit-grid"></div></article>
       </section>
 
@@ -94,22 +98,51 @@
 
       <section class="page" id="page-reports">
         <div class="page-heading"><div><p class="eyebrow">CENTRO DE RELATÓRIOS</p><h1>Relatórios</h1><p class="muted">Tenha uma visão organizada do desempenho dos seus investimentos.</p></div><button class="btn btn-primary" id="exportCsv">↓ Exportar Excel/CSV</button></div>
-        <div class="kpi-grid three"><article class="kpi-card"><span class="muted">Juros recebidos</span><strong>Kz 195.000</strong><small class="positive">Acumulado</small></article><article class="kpi-card"><span class="muted">Rentabilidade anual</span><strong>11,8%</strong><small class="muted">Média da carteira</small></article><article class="kpi-card"><span class="muted">Investimentos</span><strong id="reportCount">3</strong><small class="muted">Registados</small></article></div>
+        <div class="kpi-grid three"><article class="kpi-card"><span class="muted">Juros recebidos</span><strong id="repInterest">Kz 195.000</strong><small class="positive">Acumulado</small></article><article class="kpi-card"><span class="muted">Rentabilidade anual</span><strong id="repRate">11,8%</strong><small class="muted">Média da carteira</small></article><article class="kpi-card"><span class="muted">Investimentos</span><strong id="reportCount">3</strong><small class="muted">Registados</small></article></div>
         <article class="panel"><div class="panel-heading"><div><h2>Resumo do portfólio</h2><p class="muted">Dados dos investimentos registados</p></div></div><div class="table-scroll"><table><thead><tr><th>INVESTIMENTO</th><th>CAPITAL</th><th>JUROS ESTIMADOS</th><th>VALOR TOTAL</th><th>ESTADO</th></tr></thead><tbody id="reportRows"></tbody></table></div></article>
+      </section>
+
+      <section class="page" id="page-scholarships">
+        <div class="page-heading"><div><p class="eyebrow">INVESTIMENTO SOCIAL</p><h1>Bolsas</h1><p class="muted">Escolha uma bolsa, defina quanto investir e porquê.</p></div></div>
+        <div class="kpi-grid three">
+          <article class="kpi-card"><div class="kpi-top"><span>Total investido em bolsas</span><span class="kpi-icon green">🎓</span></div><strong id="schTotal">Kz 0</strong><small class="muted">Soma de todos os apoios</small></article>
+          <article class="kpi-card"><div class="kpi-top"><span>Bolsas apoiadas</span><span class="kpi-icon navy">◈</span></div><strong id="schCount">0</strong><small class="muted">De 5 disponíveis</small></article>
+          <article class="kpi-card"><div class="kpi-top"><span>Investimentos feitos</span><span class="kpi-icon gold">⇄</span></div><strong id="schOps">0</strong><small class="muted">Registos na conta</small></article>
+        </div>
+        <div id="scholarshipGrid" class="scholarship-grid"></div>
+        <article class="panel"><div class="panel-heading"><div><h2>Os meus investimentos em bolsas</h2><p class="muted">Histórico dos apoios que registou</p></div></div><div class="table-scroll"><table><thead><tr><th>BOLSA</th><th>MOTIVO</th><th>DATA</th><th>VALOR</th><th></th></tr></thead><tbody id="scholarshipRows"></tbody></table></div></article>
+        <p class="disclaimer">Nota: o investimento em bolsas é um apoio social. Não gera juros nem garante retorno financeiro. Confirme sempre as condições na fonte oficial de cada programa.</p>
       </section>
 
       <section class="page" id="page-settings">
         <div class="page-heading"><div><p class="eyebrow">A SUA CONTA</p><h1>Definições</h1><p class="muted">Personalize a sua experiência InvestTrack.</p></div></div>
-        <article class="panel settings-panel"><h2>Perfil pessoal</h2><div class="settings-profile"><div class="avatar large">AA</div><div><strong>João Manuel</strong><p class="muted">abilio@example.com</p></div></div><div class="form-row"><label>Nome completo<input value="João Manuel"></label><label>Correio electrónico<input type="email" value="abilio@example.com"></label></div><div class="form-row"><label>Moeda preferencial<select><option>AOA — Kwanza angolano</option><option>USD — Dólar americano</option><option>EUR — Euro</option></select></label><label>Formato de data<select><option>DD/MM/AAAA</option><option>MM/DD/AAAA</option></select></label></div><button class="btn btn-primary" id="saveSettings">Guardar alterações</button></article>
-        <article class="panel settings-panel"><h2>Preferências de notificação</h2><label class="setting-toggle"><span><strong>Alertas de vencimento</strong><small>Receber avisos antes do vencimento dos depósitos.</small></span><input type="checkbox" checked></label><label class="setting-toggle"><span><strong>Resumo mensal</strong><small>Receber um resumo mensal do desempenho.</small></span><input type="checkbox" checked></label></article>
+        <article class="panel settings-panel"><h2>Perfil pessoal</h2><div class="settings-profile"><div class="avatar large" id="settingsAvatar">JM</div><div><strong id="settingsName">João Manuel</strong><p class="muted" id="settingsEmail">abilio@example.com</p></div></div><div class="form-row"><label>Nome completo<input id="setName" value="João Manuel"></label><label>Correio electrónico<input id="setEmail" type="email" value="abilio@example.com"></label></div><div class="form-row"><label>Moeda preferencial<select id="setCurrency"><option>AOA — Kwanza angolano</option><option>USD — Dólar americano</option><option>EUR — Euro</option></select></label><label>Formato de data<select id="setDateFormat"><option>DD/MM/AAAA</option><option>MM/DD/AAAA</option></select></label></div><button class="btn btn-primary" id="saveSettings">Guardar alterações</button></article>
+        <article class="panel settings-panel"><h2>Preferências de notificação</h2><label class="setting-toggle"><span><strong>Alertas de vencimento</strong><small>Receber avisos antes do vencimento dos depósitos.</small></span><input type="checkbox" id="notifAlerts" checked></label><label class="setting-toggle"><span><strong>Resumo mensal</strong><small>Receber um resumo mensal do desempenho.</small></span><input type="checkbox" id="notifMonthly" checked></label></article>
       </section>
       <footer class="footer">© 2026 Investor. Todos os direitos reservados. <span>Os dados são apenas demonstrativos.</span></footer>
     </main>
   </div>
 
-  <div class="modal-backdrop" id="investmentModal"><div class="modal"><div class="modal-header"><div><p class="eyebrow">NOVO REGISTO</p><h2>Adicionar investimento</h2></div><button class="close-modal" data-close-modal>×</button></div><form id="investmentForm"><div class="form-row"><label>Nome do investimento<input name="name" required placeholder="Ex.: Depósito Crescer"></label><label>Categoria<select name="type"><option>Depósito a prazo</option><option>Depósito bancário</option><option>Outro</option></select></label></div><div class="form-row"><label>Instituição financeira<input name="institution" required placeholder="Ex.: Banco Atlântico"></label><label>Capital inicial (Kz)<input name="amount" type="number" min="1" required placeholder="500000"></label></div><div class="form-row"><label>Taxa anual (%)<input name="rate" type="number" min="0" max="100" step=".01" required placeholder="12"></label><label>Data de início<input name="start" type="date" required></label></div><div class="form-row"><label>Data de vencimento<input name="maturity" type="date"></label><label>Frequência de juros<select name="frequency"><option>Mensal</option><option>Trimestral</option><option>Semestral</option><option>Anual</option><option>No vencimento</option></select></label></div><label>Notas adicionais<textarea name="notes" rows="2" placeholder="Informações opcionais..."></textarea></label><div class="estimate-box" id="investmentEstimate">Preencha o capital, a taxa e as datas para ver uma estimativa.</div><div class="modal-actions"><button type="button" class="btn btn-outline" data-close-modal>Cancelar</button><button class="btn btn-primary" type="submit">Guardar investimento</button></div></form></div></div>
+  <div class="modal-backdrop" id="investmentModal"><div class="modal" role="dialog" aria-modal="true"><div class="modal-header"><div><p class="eyebrow">NOVO REGISTO</p><h2>Adicionar investimento</h2></div><button type="button" class="close-modal" data-close-modal aria-label="Fechar">×</button></div><form id="investmentForm"><div class="form-row"><label>Nome do investimento<input name="name" required placeholder="Ex.: Depósito Crescer"></label><label>Categoria<select name="type"><option>Depósito a prazo</option><option>Depósito bancário</option><option>Outro</option></select></label></div><div class="form-row"><label>Instituição financeira<input name="institution" required placeholder="Ex.: Banco Atlântico"></label><label>Capital inicial (Kz)<input name="amount" type="number" min="1" required placeholder="500000"></label></div><div class="form-row"><label>Taxa anual (%)<input name="rate" type="number" min="0" max="100" step=".01" required placeholder="12"></label><label>Data de início<input name="start" type="date" required></label></div><div class="form-row"><label>Data de vencimento<input name="maturity" type="date"></label><label>Frequência de juros<select name="frequency"><option>Mensal</option><option>Trimestral</option><option>Semestral</option><option>Anual</option><option>No vencimento</option></select></label></div><label>Notas adicionais<textarea name="notes" rows="2" placeholder="Informações opcionais..."></textarea></label><div class="estimate-box" id="investmentEstimate">Preencha o capital, a taxa e as datas para ver uma estimativa.</div><div class="modal-actions"><button type="button" class="btn btn-outline" data-close-modal>Cancelar</button><button class="btn btn-primary" type="submit">Guardar investimento</button></div></form></div></div>
 
-  <div class="modal-backdrop" id="transactionModal"><div class="modal compact-modal"><div class="modal-header"><div><p class="eyebrow">NOVO MOVIMENTO</p><h2>Registar transacção</h2></div><button class="close-modal" data-close-modal>×</button></div><form id="transactionForm"><label>Descrição<input name="description" required placeholder="Ex.: Reforço mensal"></label><div class="form-row"><label>Tipo<select name="type"><option>Depósito</option><option>Levantamento</option><option>Juros</option><option>Reinvestimento</option></select></label><label>Valor (Kz)<input name="amount" type="number" min="1" required></label></div><label>Data<input name="date" type="date" required></label><label>Investimento associado<input name="investment" placeholder="Nome do investimento"></label><div class="modal-actions"><button type="button" class="btn btn-outline" data-close-modal>Cancelar</button><button class="btn btn-primary">Guardar transacção</button></div></form></div></div>
+  <div class="modal-backdrop" id="transactionModal"><div class="modal compact-modal" role="dialog" aria-modal="true"><div class="modal-header"><div><p class="eyebrow">NOVO MOVIMENTO</p><h2>Registar transacção</h2></div><button type="button" class="close-modal" data-close-modal aria-label="Fechar">×</button></div><form id="transactionForm"><label>Descrição<input name="description" required placeholder="Ex.: Reforço mensal"></label><div class="form-row"><label>Tipo<select name="type"><option>Depósito</option><option>Levantamento</option><option>Juros</option><option>Reinvestimento</option></select></label><label>Valor (Kz)<input name="amount" type="number" min="1" required></label></div><label>Data<input name="date" type="date" required></label><label>Investimento associado<input name="investment" placeholder="Nome do investimento"></label><div class="modal-actions"><button type="button" class="btn btn-outline" data-close-modal>Cancelar</button><button class="btn btn-primary">Guardar transacção</button></div></form></div></div>
+
+  <div class="modal-backdrop" id="notificationsModal"><div class="modal compact-modal" role="dialog" aria-modal="true"><div class="modal-header"><div><p class="eyebrow">AVISOS</p><h2>Notificações</h2></div><button type="button" class="close-modal" data-close-modal aria-label="Fechar">×</button></div><div id="notificationList" class="notification-list"></div></div></div>
+
+  <div class="modal-backdrop" id="scholarshipModal"><div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header"><div><p class="eyebrow" id="schEntity">BOLSA</p><h2 id="schTitle">Investir</h2></div><button type="button" class="close-modal" data-close-modal aria-label="Fechar">×</button></div>
+    <p class="muted sch-summary" id="schSummary"></p>
+    <form id="scholarshipForm">
+      <fieldset class="reason-group"><legend>Porque quer investir nesta bolsa?</legend><div id="schReasons"></div></fieldset>
+      <label>Quanto quer investir (Kz)<input name="amount" id="schAmount" type="number" min="1000" step="1000" required></label>
+      <input type="range" id="schRange" min="10000" max="5000000" step="10000" aria-label="Ajustar valor">
+      <div class="chips" id="schChips"><button type="button" class="chip" data-amount="10000">10.000</button><button type="button" class="chip" data-amount="50000">50.000</button><button type="button" class="chip" data-amount="100000">100.000</button><button type="button" class="chip" data-amount="500000">500.000</button></div>
+      <label>Nota pessoal (opcional)<textarea name="note" rows="2" placeholder="Ex.: Quero apoiar um estudante da minha província"></textarea></label>
+      <div class="estimate-box" id="schEstimate"></div>
+      <div class="modal-actions"><button type="button" class="btn btn-outline" data-close-modal>Cancelar</button><button class="btn btn-primary" type="submit">Confirmar investimento</button></div>
+    </form>
+  </div></div>
+
   <div class="toast" id="toast"></div>
 </body>
 </html>
